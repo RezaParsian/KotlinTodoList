@@ -1,20 +1,26 @@
 package rp.task
 
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.Json
 import java.io.File
 import kotlin.system.exitProcess
-import kotlinx.serialization.Serializable
 
 val header = "================================="
-val file="./data.json"
-val tasks: ArrayList<Task> = ArrayList()
+val file = "./data.json"
+var tasks: ArrayList<Task> = ArrayList()
 
 @Serializable
 data class Task(
-    val task: String,
+    var task: String,
     var isCompleted: Boolean,
 )
 
 fun main() {
+    val data = File(file);
+
+    if (data.exists())
+        tasks = Json.decodeFromString<ArrayList<Task>>(data.readText())
+
     menu()
 }
 
@@ -24,6 +30,7 @@ fun menu() {
     val items = arrayOf(
         "Add a Task",
         "View All Tasks",
+        "Edit a Task",
         "Mark Task as Completed",
         "Delete a Task",
         "Exit"
@@ -41,22 +48,21 @@ fun readMenu() {
 
     try {
         when (input.toInt()) {
-            1 ->
-                addTask()
+            1 -> addTask()
 
             2 -> {
                 showAllTasks()
                 readln()
             }
 
-            3 ->
-                markTaskAsComplete()
+            3 -> editTask()
 
-            4 ->
-                deleteTask()
+            4 -> markTaskAsComplete()
 
-            5 -> {
-                File(file).writeText(tasks.joinToString("\n") { "${it.task},${it.isCompleted}" })
+            5 -> deleteTask()
+
+            6 -> {
+                File(file).writeText(Json.encodeToString(tasks))
                 exitProcess(0)
             }
 
@@ -72,20 +78,34 @@ fun readMenu() {
     menu()
 }
 
+fun editTask() {
+    showAllTasks()
+
+    println("Chose a task: ")
+
+    val index = readln().toInt() - 1
+
+    println("Changing task (${tasks[index].task}): ")
+
+    tasks[index].task = readln()
+
+    println("Your task edit successfully.")
+}
+
 fun deleteTask() {
     showAllTasks()
 
     println("Chose a task: ")
 
-    val index = readln().toInt()
+    val index = readln().toInt() - 1
 
-    println("Are you sure you want to delete this task? (${tasks[index - 1].task})")
+    println("Are you sure you want to delete this task? (${tasks[index].task})")
     println("if you want to delete this task type yes")
 
     if (readln() != "yes")
         return
 
-    tasks.removeAt(index - 1)
+    tasks.removeAt(index)
 
     println("Your task deleted successfully")
 
@@ -97,11 +117,11 @@ fun markTaskAsComplete() {
 
     println("Chose a task: ")
 
-    val index = readln().toInt()
+    val index = readln().toInt() -1
 
-    tasks[index-1].isCompleted=!tasks[index-1].isCompleted
+    tasks[index].isCompleted = !tasks[index].isCompleted
 
-    println("Your task has marked as ${if (tasks[index-1].isCompleted) "Finish" else "Unfinished"}!")
+    println("Your task has marked as ${if (tasks[index].isCompleted) "Finish" else "Unfinished"}!")
 
     readln()
 }
